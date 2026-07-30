@@ -46,7 +46,7 @@ if (completed) {
             setCompleted(true);
         }
     };
-
+console.log(currentQuestion.videoName);
   return (
     <div style={{ padding: "20px" }}>
       <h1>AI Interview Simulator</h1>
