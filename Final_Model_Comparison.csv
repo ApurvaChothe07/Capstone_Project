@@ -1,0 +1,4 @@
+Model,Accuracy,Accuracy (%)
+Random Forest (Baseline),0.687,68.7
+Baseline XGBoost,0.69,69.0
+Proposed Sliding Window + Optimized XGBoost,0.7136402753872634,71.36402753872633

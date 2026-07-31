@@ -1,0 +1,4 @@
+Model,Accuracy (%),Precision (%),Recall (%),F1-Score (%)
+Random Forest (Baseline),68.7,68.2,68.4,68.1
+Baseline XGBoost,69.0,69.1,69.0,69.0
+Proposed Sliding Window + Optimized XGBoost,71.36,71.0,71.0,71.0
