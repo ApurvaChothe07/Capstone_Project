@@ -1,60 +1,6 @@
-import { useRef, useState } from "react";
-
-function SpeechRecognition({ transcript, setTranscript }) {
-
-    const recognitionRef = useRef(null);
-    const [listening, setListening] = useState(false);
-
-    const startListening = () => {
-        const SpeechRecognitionAPI =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-        if (!SpeechRecognitionAPI) {
-            alert("Speech Recognition is not supported");
-            return;
-        }
-
-        const recognition = new SpeechRecognitionAPI();
-
-        recognition.continuous = true;
-        recognition.interimResults = true;
-
-        recognition.onresult = (event) => {
-            let text = "";
-
-            for (let i = 0; i < event.results.length; i++) {
-                text += event.results[i][0].transcript;
-            }
-
-            setTranscript(text);
-        };
-
-        recognition.start();
-
-        recognitionRef.current = recognition;
-        setListening(true);
-    };
-
-    const stopListening = () => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
-            setListening(false);
-        }
-    };
-
+function SpeechRecognition({ transcript }) {
     return (
-        <div>
-            {!listening ? (
-                <button onClick={startListening}>
-                    Start Speaking
-                </button>
-            ) : (
-                <button onClick={stopListening}>
-                    Stop Speaking
-                </button>
-            )}
-
+        <div style={{ marginTop: "20px" }}>
             <h3>Transcript</h3>
 
             <textarea
@@ -62,6 +8,11 @@ function SpeechRecognition({ transcript, setTranscript }) {
                 cols="80"
                 value={transcript}
                 readOnly
+                style={{
+                    width: "100%",
+                    padding: "10px",
+                    fontSize: "16px"
+                }}
             />
         </div>
     );
