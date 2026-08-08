@@ -183,7 +183,7 @@ function CandidateRegistration() {
            );
 
             setTimeout(() => {
-                navigate("/interview");
+                navigate("/welcome");
             }, 3000);
 
        }

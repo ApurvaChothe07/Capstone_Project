@@ -1,0 +1,167 @@
+/* WelcomePage.css */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.welcome-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Same dark overlay and background image as registration page */
+  background: linear-gradient(rgba(9, 11, 20, 0.8), rgba(23, 17, 38, 0.85)), 
+              url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat fixed;
+  padding: 2rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #f8fafc;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.welcome-card {
+  background: rgba(30, 41, 59, 0.65); /* Same glassmorphism effect */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 3rem; 
+  width: 100%;
+  max-width: 650px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 
+              0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.welcome-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+}
+
+.welcome-subtitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.instructions-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+}
+
+.instructions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.instructions-list li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.instructions-list li:hover {
+  background: rgba(15, 23, 42, 0.7);
+  transform: translateX(5px);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.instructions-list .icon {
+  font-size: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.instructions-list p {
+  margin: 0;
+  font-size: 1rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  word-wrap: break-word;
+  text-align: left;
+}
+
+.next-btn {
+  width: 100%;
+  padding: 1.125rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.next-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px -10px rgba(59, 130, 246, 0.6);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+.next-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .welcome-card {
+    padding: 2rem;
+  }
+  .welcome-title {
+    font-size: 2.2rem;
+  }
+  .welcome-subtitle {
+    font-size: 1.25rem;
+  }
+  .instructions-list li {
+    padding: 0.6rem 0.85rem;
+  }
+  .instructions-list p {
+    font-size: 0.9rem;
+  }
+  .instructions-list .icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+  }
+}
