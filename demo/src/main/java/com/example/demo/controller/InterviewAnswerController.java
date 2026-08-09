@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.InterviewAnswerRequest;
 import com.example.demo.entity.InterviewAnswer;
 import com.example.demo.service.InterviewAnswerService;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +19,8 @@ public class InterviewAnswerController {
 
     @PostMapping
     public InterviewAnswer saveAnswer(
-            @RequestBody InterviewAnswer answer) {
+            @RequestBody InterviewAnswerRequest request) {
 
-        return service.saveAnswer(answer);
+        return service.saveAnswer(request);
     }
 }
