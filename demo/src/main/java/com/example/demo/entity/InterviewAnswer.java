@@ -10,7 +10,13 @@ public class InterviewAnswer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long questionId;
+    @ManyToOne
+    @JoinColumn(name = "session_id")
+    private InterviewSession session;
+
+    @ManyToOne
+    @JoinColumn(name = "question_id", nullable = false)
+    private InterviewQuestion question;
 
     @Column(columnDefinition = "TEXT")
     private String answerText;
@@ -22,12 +28,24 @@ public class InterviewAnswer {
         return id;
     }
 
-    public Long getQuestionId() {
-        return questionId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public void setQuestionId(Long questionId) {
-        this.questionId = questionId;
+    public InterviewSession getSession() {
+        return session;
+    }
+
+    public void setSession(InterviewSession session) {
+        this.session = session;
+    }
+
+    public InterviewQuestion getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(InterviewQuestion question) {
+        this.question = question;
     }
 
     public String getAnswerText() {
