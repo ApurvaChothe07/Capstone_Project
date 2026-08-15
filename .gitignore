@@ -2,3 +2,8 @@
 *.iml
 node_modules/
 target/
+
+# Tobii build/runtime files
+enhanced-tobii-eyetracker-main/bin/
+enhanced-tobii-eyetracker-main/data/
+enhanced-tobii-eyetracker-main/lib/
