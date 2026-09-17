@@ -98,6 +98,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+
+.replay-btn {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.replay-btn:hover {
+    background: rgba(139, 92, 246, 0.6);
+    transform: scale(1.1);
+}
+
+.replay-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .video-wrapper > * {

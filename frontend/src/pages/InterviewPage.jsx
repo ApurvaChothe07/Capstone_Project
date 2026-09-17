@@ -22,6 +22,7 @@ function InterviewPage() {
     const [countdown, setCountdown] = useState(20);
 
     const recognitionRef = useRef(null);
+    const videoRef = useRef(null);
 
     const silenceTimer = useRef(null);
 
@@ -244,6 +245,13 @@ function InterviewPage() {
 
     };
 
+    const replayVideo = () => {
+        if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+            videoRef.current.play();
+        }
+    };
+
     const nextQuestion = async () => {
 
         try {
@@ -299,8 +307,22 @@ function InterviewPage() {
 
                 <div className="video-section">
                     <div className="video-wrapper">
-                        {/* Placeholder for now; videos to be added later */}
-                        <div style={{ width: '100%', minHeight: '40vh', backgroundColor: '#000' }}></div>
+                        <video 
+                            ref={videoRef}
+                            key={`video-${currentIndex}`}
+                            src={`/videos/Q.${currentIndex + 1}.mp4`} 
+                            autoPlay 
+                            playsInline
+                            style={{ width: '100%', minHeight: '40vh', backgroundColor: '#000', objectFit: 'cover' }}
+                        >
+                            Your browser does not support the video tag.
+                        </video>
+                        <button className="replay-btn" onClick={replayVideo} title="Replay Video">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
