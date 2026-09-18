@@ -1,416 +1,1284 @@
 import { useEffect, useRef, useState } from "react";
 import API from "../services/api";
+import VideoPlayer from "../components/VideoPlayer";
 import "./InterviewPage.css";
 
 function InterviewPage() {
+    // ==============================
+    // Question / Interview State
+    // ==============================
 
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [sessionId, setSessionId] = useState(null);
 
-    const [transcript, setTranscript] = useState("");
-    const [interimTranscript, setInterimTranscript] = useState("");
-    const interimTranscriptRef = useRef("");
-
-    const [listening, setListening] = useState(false);
-    const listeningRef = useRef(false);
-    const [isTalking, setIsTalking] = useState(false);
-    const [hasSpoken, setHasSpoken] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const [completed, setCompleted] = useState(false);
 
+    // ==============================
+    // Speech Recognition State
+    // ==============================
+
+    const [transcript, setTranscript] = useState("");
+    const [interimTranscript, setInterimTranscript] = useState("");
+
+    const [listening, setListening] = useState(false);
+    const [isTalking, setIsTalking] = useState(false);
+    const [hasSpoken, setHasSpoken] = useState(false);
+
+    // ==============================
+    // Timer
+    // ==============================
+
     const [countdown, setCountdown] = useState(20);
 
+    // ==============================
+    // Video Replay
+    // ==============================
+
+    const [videoReplayKey, setVideoReplayKey] = useState(0);
+
+    // ==============================
+    // Refs
+    // ==============================
+
     const recognitionRef = useRef(null);
-    const videoRef = useRef(null);
 
-    const silenceTimer = useRef(null);
+    const silenceTimerRef = useRef(null);
+    const countdownTimerRef = useRef(null);
+    const speakingTimerRef = useRef(null);
 
-    const countdownTimer = useRef(null);
-    const speakingTimer = useRef(null);
+    const interimTranscriptRef = useRef("");
+    const listeningRef = useRef(false);
 
-    const latestCallbacks = useRef({});
-    latestCallbacks.current = {
-        onResult: (event) => {
-            setIsTalking(true);
-            setHasSpoken(true);
-            clearTimeout(speakingTimer.current);
-            speakingTimer.current = setTimeout(() => {
-                setIsTalking(false);
-            }, 1500); // Hide timer for 1.5s after they stop speaking
+    const questionsRef = useRef([]);
+    const currentIndexRef = useRef(0);
+    const sessionIdRef = useRef(null);
 
-            let finalSegment = "";
-            let interimSegment = "";
+    const transcriptRef = useRef("");
+    const nextQuestionRef = useRef(null);
 
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    finalSegment += event.results[i][0].transcript + " ";
-                } else {
-                    interimSegment += event.results[i][0].transcript;
-                }
-            }
+    // Prevent duplicate answer submissions
+    const processingNextRef = useRef(false);
 
-            if (finalSegment) {
-                setTranscript((prev) => prev + finalSegment);
-            }
-            setInterimTranscript(interimSegment);
-            interimTranscriptRef.current = interimSegment;
-
-            resetSilenceTimer();
-            startCountdown();
-        },
-        onEnd: () => {
-            if (interimTranscriptRef.current) {
-                setTranscript((prev) => prev + interimTranscriptRef.current + " ");
-                setInterimTranscript("");
-                interimTranscriptRef.current = "";
-            }
-
-            if (listeningRef.current && recognitionRef.current) {
-                try {
-                    recognitionRef.current.start();
-                } catch (error) {
-                    console.error("Failed to restart recognition", error);
-                }
-            }
-        }
-    };
+    // ==============================
+    // Keep refs synchronized
+    // ==============================
 
     useEffect(() => {
+        questionsRef.current = questions;
+    }, [questions]);
 
-        const staticQuestions = [
-            { id: 1, questionText: "Please introduce yourself and tell us briefly about your educational background, technical interests, and career goals." },
-            { id: 2, questionText: "What is the difference between an ArrayList and a LinkedList in Java, and when would you use each?" },
-            { id: 3, questionText: "Tell us about a technical project you have worked on. What was your role, and what challenges did you face?" },
-            { id: 4, questionText: "Suppose your application suddenly starts returning a 500 Internal Server Error. How would you investigate and resolve the problem?" },
-            { id: 5, questionText: "Suppose you are working on a team and another team member strongly disagrees with your technical approach. How would you handle the situation?" },
-            { id: 6, questionText: "Tell us about a technical problem you faced in one of your projects and explain how you solved it." },
-            { id: 7, questionText: "If you are asked a technical question that you don't know the answer to, what would you do?" },
-            { id: 8, questionText: "Why do you think you would be a good fit for a software development role?" }
-        ];
-        setQuestions(staticQuestions);
+    useEffect(() => {
+        currentIndexRef.current = currentIndex;
+    }, [currentIndex]);
 
-        const candidateStr = localStorage.getItem("candidate");
-        if (candidateStr) {
-            try {
-                const candidate = JSON.parse(candidateStr);
-                if (candidate && candidate.id) {
-                    API.post("/sessions", { candidateId: candidate.id })
-                        .then((res) => {
-                            setSessionId(res.data.id);
-                        })
-                        .catch((err) => {
-                            console.error("Failed to create session:", err);
-                        });
-                }
-            } catch (e) {
-                console.error("Error parsing candidate from localStorage:", e);
-            }
-        } else {
-            console.warn("No candidate data found in localStorage. Cannot create interview session.");
-        }
+    useEffect(() => {
+        sessionIdRef.current = sessionId;
+    }, [sessionId]);
 
-    }, []);
-    if (completed) {
+    useEffect(() => {
+        transcriptRef.current = transcript;
+    }, [transcript]);
 
-        return (
+    // ============================================================
+    // Clear all timers
+    // ============================================================
 
-            <div className="completed-container">
+    const clearAllTimers = () => {
+        clearTimeout(silenceTimerRef.current);
+        clearInterval(countdownTimerRef.current);
+        clearTimeout(speakingTimerRef.current);
 
-                <h1>
-                    <span className="text-gradient-green">Interview Completed</span> ✅
-                </h1>
-
-                <p>
-                    Thank you for attending the interview.
-                </p>
-
-            </div>
-
-        );
-
-    }
-
-    if (questions.length === 0) {
-
-        return (
-            <div className="loading-container">
-                <h2>Loading...</h2>
-            </div>
-        );
-
-    }
-
-    const currentQuestion = questions[currentIndex];
-    const resetSilenceTimer = () => {
-
-        clearTimeout(silenceTimer.current);
-
-        silenceTimer.current = setTimeout(() => {
-
-            nextQuestion();
-
-        }, 20000);
-
+        silenceTimerRef.current = null;
+        countdownTimerRef.current = null;
+        speakingTimerRef.current = null;
     };
 
-    const startCountdown = () => {
+    // ============================================================
+    // Start / Reset 20 second silence timer
+    // ============================================================
 
-        clearInterval(countdownTimer.current);
+    const resetSilenceTimer = () => {
+        clearTimeout(silenceTimerRef.current);
 
         setCountdown(20);
 
-        countdownTimer.current = setInterval(() => {
+        silenceTimerRef.current = setTimeout(() => {
+            console.log(
+                "20 seconds of silence detected."
+            );
 
-            setCountdown((prev) => {
-
-                if (prev <= 1) {
-
-                    clearInterval(countdownTimer.current);
-
-                    return 20;
-
-                }
-
-                return prev - 1;
-
-            });
-
-        }, 1000);
-
+            if (nextQuestionRef.current) {
+                nextQuestionRef.current();
+            }
+        }, 20000);
     };
 
-    const startListening = () => {
+    // ============================================================
+    // Start countdown
+    // ============================================================
 
+    const startCountdown = () => {
+        clearInterval(countdownTimerRef.current);
+
+        setCountdown(20);
+
+        countdownTimerRef.current = setInterval(() => {
+            setCountdown((previous) => {
+                if (previous <= 1) {
+                    clearInterval(
+                        countdownTimerRef.current
+                    );
+
+                    return 20;
+                }
+
+                return previous - 1;
+            });
+        }, 1000);
+    };
+
+    // ============================================================
+    // Stop speech recognition
+    // ============================================================
+
+    const stopRecognitionOnly = () => {
+        listeningRef.current = false;
+        setListening(false);
+
+        if (recognitionRef.current) {
+            recognitionRef.current.onend = null;
+
+            try {
+                recognitionRef.current.stop();
+            } catch (error) {
+                console.log(
+                    "Recognition already stopped."
+                );
+            }
+
+            recognitionRef.current = null;
+        }
+
+        clearAllTimers();
+    };
+
+    // ============================================================
+    // Start speech recognition
+    // ============================================================
+
+    const startListening = () => {
         const SpeechRecognitionAPI =
             window.SpeechRecognition ||
             window.webkitSpeechRecognition;
 
         if (!SpeechRecognitionAPI) {
-
-            alert("Speech Recognition is not supported.");
+            alert(
+                "Speech Recognition is not supported in this browser. Please use Google Chrome."
+            );
 
             return;
-
         }
 
-        const recognition = new SpeechRecognitionAPI();
+        // Prevent multiple recognition instances
+        if (listeningRef.current) {
+            return;
+        }
+
+        const recognition =
+            new SpeechRecognitionAPI();
 
         recognition.continuous = true;
-
         recognition.interimResults = true;
 
-        // Use the user's browser language to better understand regional accents
-        recognition.lang = navigator.language || "en-US";
+        recognition.lang =
+            navigator.language || "en-US";
 
-        recognition.onresult = (event) => latestCallbacks.current.onResult(event);
+        // ==============================
+        // Speech Result
+        // ==============================
 
-        recognition.onerror = (event) => {
+        recognition.onresult = (event) => {
+            setIsTalking(true);
+            setHasSpoken(true);
 
-            console.log(event.error);
+            clearTimeout(
+                speakingTimerRef.current
+            );
 
+            speakingTimerRef.current =
+                setTimeout(() => {
+                    setIsTalking(false);
+                }, 1500);
+
+            let finalSegment = "";
+            let interimSegment = "";
+
+            for (
+                let i = event.resultIndex;
+                i < event.results.length;
+                i++
+            ) {
+                const result =
+                    event.results[i];
+
+                const text =
+                    result[0].transcript;
+
+                if (result.isFinal) {
+                    finalSegment += text + " ";
+                } else {
+                    interimSegment += text;
+                }
+            }
+
+            if (finalSegment) {
+                setTranscript((previous) => {
+                    const updated =
+                        previous +
+                        finalSegment;
+
+                    transcriptRef.current =
+                        updated;
+
+                    return updated;
+                });
+            }
+
+            setInterimTranscript(
+                interimSegment
+            );
+
+            interimTranscriptRef.current =
+                interimSegment;
+
+            // Candidate spoke, therefore
+            // reset the 20-second silence timer
+            resetSilenceTimer();
+            startCountdown();
         };
 
-        recognition.onend = () => latestCallbacks.current.onEnd();
+        // ==============================
+        // Speech Error
+        // ==============================
 
-        recognition.start();
+        recognition.onerror = (event) => {
+            console.error(
+                "Speech recognition error:",
+                event.error
+            );
 
-        recognitionRef.current = recognition;
+            // Some errors should not completely
+            // destroy the interview.
+            if (
+                event.error ===
+                "not-allowed" ||
+                event.error ===
+                "service-not-allowed"
+            ) {
+                listeningRef.current =
+                    false;
 
-        setListening(true);
-        listeningRef.current = true;
+                setListening(false);
 
-        resetSilenceTimer();
+                clearAllTimers();
 
-        startCountdown();
+                alert(
+                    "Microphone permission is required for speech recognition."
+                );
+            }
+        };
 
-    };
+        // ==============================
+        // Recognition End
+        // ==============================
 
-    const stopListening = () => {
+        recognition.onend = () => {
+            // Save any remaining interim text
+            if (interimTranscriptRef.current) {
+                setTranscript((previous) => {
+                    const updated =
+                        previous +
+                        interimTranscriptRef.current +
+                        " ";
 
-        if (recognitionRef.current) {
+                    transcriptRef.current =
+                        updated;
 
-            recognitionRef.current.onend = null;
+                    return updated;
+                });
 
-            recognitionRef.current.stop();
+                setInterimTranscript("");
 
-        }
+                interimTranscriptRef.current =
+                    "";
+            }
 
-        clearTimeout(silenceTimer.current);
-
-        clearInterval(countdownTimer.current);
-
-        setListening(false);
-        listeningRef.current = false;
-
-    };
-
-    const replayVideo = () => {
-        if (videoRef.current) {
-            videoRef.current.currentTime = 0;
-            videoRef.current.play();
-        }
-    };
-
-    const nextQuestion = async () => {
+            // Automatically restart if the
+            // interview is still listening
+            if (
+                listeningRef.current &&
+                recognitionRef.current ===
+                recognition
+            ) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.log(
+                        "Recognition restart skipped."
+                    );
+                }
+            }
+        };
 
         try {
-            await API.post("/answers", {
-                sessionId: sessionId,
-                questionId: currentQuestion.id,
-                answerText: (transcript + interimTranscript).trim()
-            });
+            recognition.start();
+
+            recognitionRef.current =
+                recognition;
+
+            listeningRef.current = true;
+
+            setListening(true);
+
+            resetSilenceTimer();
+            startCountdown();
+
+            console.log(
+                "Speech recognition started."
+            );
         } catch (error) {
-            console.error("Failed to submit answer:", error);
+            console.error(
+                "Failed to start speech recognition:",
+                error
+            );
         }
-
-        setTranscript("");
-        setInterimTranscript("");
-        interimTranscriptRef.current = "";
-        setHasSpoken(false);
-
-
-
-        if (currentIndex < questions.length - 1) {
-
-            setCurrentIndex((prev) => prev + 1);
-
-            if (listeningRef.current && recognitionRef.current) {
-                recognitionRef.current.abort();
-            }
-
-            if (listeningRef.current) {
-                resetSilenceTimer();
-                startCountdown();
-            }
-
-        } else {
-
-            stopListening();
-
-            setCompleted(true);
-
-        }
-
     };
 
-    // Auto-start listening effect removed to require "Start Speaking" click
+    // ============================================================
+    // Stop speaking
+    // ============================================================
+
+    const stopListening = () => {
+        console.log(
+            "Speech recognition stopped."
+        );
+
+        stopRecognitionOnly();
+
+        setIsTalking(false);
+    };
+
+    // ============================================================
+    // Initialize interview
+    // ============================================================
+
+    useEffect(() => {
+        const initializeInterview =
+            async () => {
+                try {
+                    setLoading(true);
+                    setErrorMessage("");
+
+                    // ------------------------------
+                    // Get candidate
+                    // ------------------------------
+
+                    const candidateData =
+                        localStorage.getItem(
+                            "candidate"
+                        );
+
+                    console.log(
+                        "Candidate data:",
+                        candidateData
+                    );
+
+                    if (!candidateData) {
+                        throw new Error(
+                            "Candidate information was not found. Please complete registration first."
+                        );
+                    }
+
+                    let candidate;
+
+                    try {
+                        candidate =
+                            JSON.parse(
+                                candidateData
+                            );
+                    } catch (error) {
+                        throw new Error(
+                            "Candidate information is invalid. Please register again."
+                        );
+                    }
+
+                    console.log(
+                        "Parsed candidate:",
+                        candidate
+                    );
+
+                    if (
+                        !candidate ||
+                        !candidate.id
+                    ) {
+                        throw new Error(
+                            "Candidate ID was not found. Please complete registration again."
+                        );
+                    }
+
+                    // ------------------------------
+                    // Create session
+                    // ------------------------------
+
+                    console.log(
+                        "Creating interview session..."
+                    );
+
+                    const sessionResponse =
+                        await API.post(
+                            "/sessions",
+                            {
+                                candidateId:
+                                candidate.id,
+                            }
+                        );
+
+                    console.log(
+                        "Interview session created:",
+                        sessionResponse.data
+                    );
+
+                    const newSessionId =
+                        sessionResponse.data.id;
+
+                    if (!newSessionId) {
+                        throw new Error(
+                            "Interview session ID was not returned by the server."
+                        );
+                    }
+
+                    setSessionId(
+                        newSessionId
+                    );
+
+                    sessionIdRef.current =
+                        newSessionId;
+
+                    // ------------------------------
+                    // Load questions
+                    // ------------------------------
+
+                    console.log(
+                        "Loading interview questions..."
+                    );
+
+                    const questionResponse =
+                        await API.get(
+                            "/questions"
+                        );
+
+                    console.log(
+                        "Questions received:",
+                        questionResponse.data
+                    );
+
+                    if (
+                        !Array.isArray(
+                            questionResponse.data
+                        )
+                    ) {
+                        throw new Error(
+                            "Invalid question data received from the server."
+                        );
+                    }
+
+                    if (
+                        questionResponse.data
+                            .length === 0
+                    ) {
+                        throw new Error(
+                            "No interview questions were found in the database."
+                        );
+                    }
+
+                    // Sort by ID so the sequence
+                    // is always correct
+                    const sortedQuestions =
+                        [
+                            ...questionResponse.data,
+                        ].sort(
+                            (a, b) =>
+                                a.id - b.id
+                        );
+
+                    console.log(
+                        "Sorted questions:",
+                        sortedQuestions
+                    );
+
+                    setQuestions(
+                        sortedQuestions
+                    );
+
+                    questionsRef.current =
+                        sortedQuestions;
+
+                    setCurrentIndex(0);
+
+                    currentIndexRef.current =
+                        0;
+
+                    setLoading(false);
+                } catch (error) {
+                    console.error(
+                        "Failed to initialize interview:",
+                        error
+                    );
+
+                    let message =
+                        "Failed to load the interview.";
+
+                    if (
+                        error.response
+                            ?.data
+                    ) {
+                        console.error(
+                            "Backend response:",
+                            error.response.data
+                        );
+                    }
+
+                    if (error.message) {
+                        message =
+                            error.message;
+                    }
+
+                    setErrorMessage(
+                        message
+                    );
+
+                    setLoading(false);
+                }
+            };
+
+        initializeInterview();
+
+        return () => {
+            stopRecognitionOnly();
+        };
+    }, []);
+
+    // ============================================================
+    // Replay video
+    // ============================================================
+
+    const replayVideo = () => {
+        setVideoReplayKey(
+            (previous) =>
+                previous + 1
+        );
+    };
+
+    // ============================================================
+    // Move to next question / Submit
+    // ============================================================
+
+    const nextQuestion = async () => {
+        // Prevent double-click / duplicate submission
+        if (processingNextRef.current) {
+            return;
+        }
+
+        processingNextRef.current = true;
+
+        try {
+            const currentQuestions =
+                questionsRef.current;
+
+            const currentQuestionIndex =
+                currentIndexRef.current;
+
+            const currentSessionId =
+                sessionIdRef.current;
+
+            if (!currentSessionId) {
+                throw new Error(
+                    "Session ID is not available."
+                );
+            }
+
+            if (
+                currentQuestions.length ===
+                0
+            ) {
+                throw new Error(
+                    "Questions are not available."
+                );
+            }
+
+            const currentQuestion =
+                currentQuestions[
+                    currentQuestionIndex
+                    ];
+
+            if (!currentQuestion) {
+                throw new Error(
+                    "Current question was not found."
+                );
+            }
+
+            // --------------------------------
+            // Stop timer while saving answer
+            // --------------------------------
+
+            clearAllTimers();
+
+            // --------------------------------
+            // Get final answer
+            // --------------------------------
+
+            let finalAnswer =
+                transcriptRef.current;
+
+            if (
+                interimTranscriptRef.current
+            ) {
+                finalAnswer +=
+                    " " +
+                    interimTranscriptRef.current;
+            }
+
+            finalAnswer =
+                finalAnswer.trim();
+
+            console.log(
+                "Saving answer:",
+                {
+                    sessionId:
+                    currentSessionId,
+                    questionId:
+                    currentQuestion.id,
+                    answerText:
+                    finalAnswer,
+                }
+            );
+
+            // --------------------------------
+            // Save answer
+            // --------------------------------
+
+            await API.post(
+                "/answers",
+                {
+                    sessionId:
+                    currentSessionId,
+                    questionId:
+                    currentQuestion.id,
+                    answerText:
+                    finalAnswer,
+                }
+            );
+
+            console.log(
+                "Answer saved successfully."
+            );
+
+            // --------------------------------
+            // Clear answer
+            // --------------------------------
+
+            setTranscript("");
+            transcriptRef.current = "";
+
+            setInterimTranscript("");
+
+            interimTranscriptRef.current =
+                "";
+
+            setHasSpoken(false);
+            setIsTalking(false);
+
+            // --------------------------------
+            // Is this the last question?
+            // --------------------------------
+
+            if (
+                currentQuestionIndex >=
+                currentQuestions.length - 1
+            ) {
+                console.log(
+                    "All questions completed."
+                );
+
+                stopRecognitionOnly();
+
+                setCompleted(true);
+
+                return;
+            }
+
+            // --------------------------------
+            // Move to next question
+            // --------------------------------
+
+            const nextIndex =
+                currentQuestionIndex + 1;
+
+            setCurrentIndex(
+                nextIndex
+            );
+
+            currentIndexRef.current =
+                nextIndex;
+
+            // Reset video
+            setVideoReplayKey(0);
+
+            console.log(
+                `Moving to question ${
+                    nextIndex + 1
+                }`
+            );
+
+            // --------------------------------
+            // Continue listening automatically
+            // --------------------------------
+
+            const wasListening =
+                listeningRef.current;
+
+            stopRecognitionOnly();
+
+            // Give React time to render
+            // the next question
+            if (wasListening) {
+                setTimeout(() => {
+                    startListening();
+                }, 300);
+            }
+        } catch (error) {
+            console.error(
+                "Failed to save answer or move to next question:",
+                error
+            );
+
+            if (
+                error.response
+                    ?.data
+            ) {
+                console.error(
+                    "Backend response:",
+                    error.response.data
+                );
+            }
+
+            alert(
+                "Could not save your answer. Please try again."
+            );
+        } finally {
+            processingNextRef.current =
+                false;
+        }
+    };
+
+    // Keep the latest nextQuestion function
+    // available to the silence timer.
+    useEffect(() => {
+        nextQuestionRef.current =
+            nextQuestion;
+    });
+
+    // ============================================================
+    // Cleanup
+    // ============================================================
+
+    useEffect(() => {
+        return () => {
+            clearAllTimers();
+
+            listeningRef.current =
+                false;
+
+            if (recognitionRef.current) {
+                recognitionRef.current.onend =
+                    null;
+
+                try {
+                    recognitionRef.current.stop();
+                } catch (error) {
+                    console.log(
+                        "Recognition cleanup completed."
+                    );
+                }
+
+                recognitionRef.current =
+                    null;
+            }
+        };
+    }, []);
+
+    // ============================================================
+    // Loading Screen
+    // ============================================================
+
+    if (loading) {
+        return (
+            <div className="loading-container">
+                <h2>
+                    Loading Interview...
+                </h2>
+
+                <p>
+                    Preparing your questions
+                    and interview session.
+                </p>
+            </div>
+        );
+    }
+
+    // ============================================================
+    // Error Screen
+    // ============================================================
+
+    if (errorMessage) {
+        return (
+            <div className="loading-container">
+                <h2>
+                    Unable to Start Interview
+                </h2>
+
+                <p>
+                    {errorMessage}
+                </p>
+
+                <button
+                    className="btn primary-btn"
+                    onClick={() =>
+                        window.location.reload()
+                    }
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    // ============================================================
+    // Completed Screen
+    // ============================================================
+
+    if (completed) {
+        return (
+            <div className="completed-container">
+                <h1>
+                    <span className="text-gradient-green">
+                        Interview Completed
+                    </span>{" "}
+                    ✅
+                </h1>
+
+                <p>
+                    Thank you for attending
+                    the interview.
+                </p>
+
+                <p>
+                    Your responses have been
+                    securely recorded.
+                </p>
+            </div>
+        );
+    }
+
+    // ============================================================
+    // Safety check
+    // ============================================================
+
+    if (
+        questions.length === 0
+    ) {
+        return (
+            <div className="loading-container">
+                <h2>
+                    No Questions Found
+                </h2>
+
+                <p>
+                    Please check the interview
+                    question database.
+                </p>
+            </div>
+        );
+    }
+
+    // ============================================================
+    // Current Question
+    // ============================================================
+
+    const currentQuestion =
+        questions[currentIndex];
+
+    const isLastQuestion =
+        currentIndex ===
+        questions.length - 1;
+
+    // ============================================================
+    // UI
+    // ============================================================
+
     return (
         <div className="interview-container">
             <div className="glass-panel">
+
+                {/* ================= HEADER ================= */}
+
                 <div className="header-section">
                     <h1 className="title">
-                        <span className="sparkle">✦</span> AI Interview Simulator <span className="sparkle">✦</span>
+                        <span className="sparkle">
+                            ✦
+                        </span>{" "}
+                        AI Interview
+                        Simulator{" "}
+                        <span className="sparkle">
+                            ✦
+                        </span>
                     </h1>
-                    <p className="subtitle">Practice. Speak. Succeed.</p>
+
+                    <p className="subtitle">
+                        Practice. Speak.
+                        Succeed.
+                    </p>
                 </div>
+
+                {/* ================= VIDEO ================= */}
 
                 <div className="video-section">
                     <div className="video-wrapper">
-                        <video 
-                            ref={videoRef}
-                            key={`video-${currentIndex}`}
-                            src={`/videos/Q.${currentIndex + 1}.mp4`} 
-                            autoPlay 
-                            playsInline
-                            style={{ width: '100%', minHeight: '40vh', backgroundColor: '#000', objectFit: 'cover' }}
+
+                        <VideoPlayer
+                            key={`${currentQuestion.videoName}-${videoReplayKey}`}
+                            videoName={
+                                currentQuestion.videoName
+                            }
+                        />
+
+                        <button
+                            type="button"
+                            className="replay-btn"
+                            onClick={
+                                replayVideo
+                            }
+                            title="Replay Video"
                         >
-                            Your browser does not support the video tag.
-                        </video>
-                        <button className="replay-btn" onClick={replayVideo} title="Replay Video">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="1 4 1 10 7 10"></polyline>
-                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <polyline points="1 4 1 10 7 10" />
+
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
                             </svg>
                         </button>
                     </div>
                 </div>
 
+                {/* ================= QUESTION ================= */}
+
                 <div className="question-section">
+
                     <div className="question-indicator-container">
+
                         <span className="dashed-line"></span>
+
                         <span className="question-counter">
-                            QUESTION {currentIndex + 1} OF {questions.length}
+                            QUESTION{" "}
+                            {currentIndex + 1}{" "}
+                            OF{" "}
+                            {questions.length}
                         </span>
+
                         <span className="dashed-line"></span>
+
                     </div>
 
                     <h2 className="question-text">
-                        <span className="quote-mark">“</span>
+
+                        <span className="quote-mark">
+                            “
+                        </span>
+
                         {currentQuestion.questionText}
-                        <span className="quote-mark">”</span>
+
+                        <span className="quote-mark">
+                            ”
+                        </span>
+
                     </h2>
 
-                    <div className="status-pill-container" style={{ visibility: (!listening || isTalking || !hasSpoken) ? 'hidden' : 'visible' }}>
+                    {/* ================= LISTENING STATUS ================= */}
+
+                    <div
+                        className="status-pill-container"
+                        style={{
+                            visibility:
+                                listening
+                                    ? "visible"
+                                    : "hidden",
+                        }}
+                    >
                         <div className="status-pill">
+
                             <div className="listening-indicator">
-                                <svg className="mic-icon-small" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+
+                                <svg
+                                    className="mic-icon-small"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+
+                                    <line
+                                        x1="12"
+                                        y1="19"
+                                        x2="12"
+                                        y2="23"
+                                    />
+
+                                    <line
+                                        x1="8"
+                                        y1="23"
+                                        x2="16"
+                                        y2="23"
+                                    />
                                 </svg>
-                                Listening...
+
+                                {isTalking
+                                    ? "Speaking..."
+                                    : "Listening..."}
+
                             </div>
+
                             <div className="divider"></div>
+
                             <div className="timer-indicator">
-                                <svg className="timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
+
+                                <svg
+                                    className="timer-icon"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                    />
+
+                                    <polyline points="12 6 12 12 16 14" />
                                 </svg>
-                                <span className="time-text">00:{countdown.toString().padStart(2, '0')} <span className="time-total">/ 20:00</span></span>
+
+                                <span className="time-text">
+                                    00:
+                                    {countdown
+                                        .toString()
+                                        .padStart(
+                                            2,
+                                            "0"
+                                        )}
+
+                                    <span className="time-total">
+                                        {" "}
+                                        / 20:00
+                                    </span>
+                                </span>
+
                             </div>
+
                         </div>
                     </div>
                 </div>
 
+                {/* ================= CONTROLS ================= */}
 
                 <div className="bottom-panel">
+
                     <div className="controls-section">
-                        {/* Question 1 */}
-                        {!listening && currentIndex === 0 && (
-                            <button className="btn primary-btn" onClick={startListening}>
-                                <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+
+                        {/* Start Speaking */}
+
+                        {!listening && (
+                            <button
+                                type="button"
+                                className="btn primary-btn"
+                                onClick={
+                                    startListening
+                                }
+                                style={{
+                                    display:
+                                        "flex",
+                                    visibility:
+                                        "visible",
+                                    opacity: 1,
+                                }}
+                            >
+                                <svg
+                                    className="btn-icon"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+
+                                    <line
+                                        x1="12"
+                                        y1="19"
+                                        x2="12"
+                                        y2="23"
+                                    />
+
+                                    <line
+                                        x1="8"
+                                        y1="23"
+                                        x2="16"
+                                        y2="23"
+                                    />
                                 </svg>
+
                                 Start Speaking
                             </button>
                         )}
 
-                        {/* Last Question */}
-                        {listening && currentIndex === questions.length - 1 && (
-                            <button className="btn danger-btn" onClick={stopListening}>
-                                <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        {/* Stop Speaking */}
+
+                        {listening && (
+                            <button
+                                type="button"
+                                className="btn danger-btn"
+                                onClick={
+                                    stopListening
+                                }
+                                style={{
+                                    display:
+                                        "flex",
+                                    visibility:
+                                        "visible",
+                                    opacity: 1,
+                                }}
+                            >
+                                <svg
+                                    className="btn-icon"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <rect
+                                        x="3"
+                                        y="3"
+                                        width="18"
+                                        height="18"
+                                        rx="2"
+                                    />
                                 </svg>
+
                                 Stop Speaking
                             </button>
                         )}
 
-                        <button className="btn secondary-btn" onClick={nextQuestion}>
-                            <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="13 17 18 12 13 7"></polyline>
-                                <polyline points="6 17 11 12 6 7"></polyline>
+                        {/* Next / Submit */}
+
+                        <button
+                            type="button"
+                            className="btn secondary-btn"
+                            onClick={
+                                nextQuestion
+                            }
+                            disabled={
+                                processingNextRef.current
+                            }
+                            style={{
+                                display:
+                                    "flex",
+                                visibility:
+                                    "visible",
+                                opacity: 1,
+                                cursor:
+                                    "pointer",
+                            }}
+                        >
+                            <svg
+                                className="btn-icon"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <polyline points="13 17 18 12 13 7" />
+
+                                <polyline points="6 17 11 12 6 7" />
                             </svg>
-                            {currentIndex === questions.length - 1 ? "Submit" : "Next Question"}
+
+                            {isLastQuestion
+                                ? "Submit"
+                                : "Next Question"}
                         </button>
+
                     </div>
 
+                    {/* ================= SECURITY NOTE ================= */}
+
                     <div className="security-note">
-                        <svg className="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            <polyline points="9 12 11 14 15 10"></polyline>
+
+                        <svg
+                            className="shield-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+
+                            <polyline points="9 12 11 14 15 10" />
                         </svg>
-                        Your responses are securely recorded and saved
+
+                        Your responses are
+                        securely recorded
+                        and saved
+
                     </div>
+
                 </div>
             </div>
         </div>
     );
-
 }
 
 export default InterviewPage;

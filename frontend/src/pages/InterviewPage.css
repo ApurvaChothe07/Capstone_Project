@@ -1,131 +1,264 @@
-/* InterviewPage.css */
+/* =========================================================
+   InterviewPage.css
+   ========================================================= */
+
 .interview-container {
     height: 100vh;
     width: 100vw;
+
     display: flex;
     justify-content: center;
     align-items: center;
+
     background: linear-gradient(135deg, #0b1120 0%, #17103a 100%);
+
     overflow: hidden;
+
     font-family: 'Inter', system-ui, sans-serif;
     color: #f8fafc;
+
     position: fixed;
     top: 0;
     left: 0;
+
     z-index: 1000;
 }
 
-/* Subtle background glow */
+/* =========================================================
+   Background Glow
+   ========================================================= */
+
 .interview-container::before {
     content: '';
+
     position: absolute;
+
     top: 50%;
     left: 50%;
+
     transform: translate(-50%, -50%);
+
     width: 70vw;
     height: 70vh;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(0,0,0,0) 70%);
+
+    background: radial-gradient(
+            circle,
+            rgba(139, 92, 246, 0.08) 0%,
+            rgba(0, 0, 0, 0) 70%
+    );
+
     z-index: 0;
+
     pointer-events: none;
 }
+
+/* =========================================================
+   Main Glass Panel
+   ========================================================= */
 
 .glass-panel {
     position: relative;
     z-index: 1;
+
     width: 95%;
     max-width: 950px;
-    height: auto;
-    min-height: 85vh;
-    max-height: 95vh;
-    overflow-y: auto;
+
+    height: 94vh;
+    max-height: 94vh;
+
     background: rgba(20, 25, 45, 0.6);
+
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+
     border: 1px solid rgba(255, 255, 255, 0.05);
+
     border-radius: 24px;
-    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+    box-shadow:
+            0 30px 60px -15px rgba(0, 0, 0, 0.7),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
     display: flex;
     flex-direction: column;
-    padding: 2rem 2.5rem;
+
+    padding: 1.5rem 2.5rem;
+
     box-sizing: border-box;
+
+    overflow: hidden;
 }
+
+/* =========================================================
+   Header
+   ========================================================= */
 
 .header-section {
     text-align: center;
-    margin-bottom: 1.5rem;
+
+    margin-bottom: 1rem;
+
     flex-shrink: 0;
 }
 
 .title {
     font-size: 1.8rem;
     font-weight: 700;
+
     margin: 0 0 0.4rem 0;
-    background: linear-gradient(to right, #bca5ff, #e9d5ff);
+
+    background: linear-gradient(
+            to right,
+            #bca5ff,
+            #e9d5ff
+    );
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     gap: 0.5rem;
+
     letter-spacing: -0.02em;
 }
 
 .sparkle {
     font-size: 1.2rem;
+
     color: #a78bfa;
+
     -webkit-text-fill-color: initial;
+
     opacity: 0.8;
 }
 
 .subtitle {
     font-size: 0.95rem;
+
     color: #94a3b8;
+
     margin: 0;
+
     font-weight: 400;
 }
 
+/* =========================================================
+   VIDEO SECTION
+   ========================================================= */
+
 .video-section {
     display: flex;
+
     justify-content: center;
-    margin-bottom: 1.5rem;
+    align-items: center;
+
+    width: 100%;
+
+    margin-bottom: 1rem;
+
     flex-shrink: 0;
 }
 
+/*
+   Important:
+   Give the video enough space instead of using a very
+   small max-height.
+*/
+
 .video-wrapper {
     width: 100%;
+
     max-width: 800px;
+
+    height: 34vh;
+
+    min-height: 220px;
+
     border-radius: 16px;
+
     overflow: hidden;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+    box-shadow:
+            0 10px 30px -10px rgba(0, 0, 0, 0.6),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+
     background: #000;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
+
     position: relative;
 }
 
+/*
+   Make sure the ENTIRE video is visible.
+   contain = no cropping.
+*/
+
+.video-wrapper video {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+
+    display: block;
+
+    background: #000;
+}
+
+/*
+   If VideoPlayer renders another wrapper,
+   this keeps it centered.
+*/
+
+.video-wrapper > * {
+    max-width: 100%;
+}
+
+/* =========================================================
+   Replay Button
+   ========================================================= */
+
 .replay-btn {
     position: absolute;
+
     bottom: 15px;
     right: 15px;
+
     background: rgba(15, 23, 42, 0.6);
+
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+
     border: 1px solid rgba(255, 255, 255, 0.1);
+
     color: white;
+
     width: 36px;
     height: 36px;
+
     border-radius: 50%;
+
     display: flex;
+
     justify-content: center;
     align-items: center;
+
     cursor: pointer;
+
     transition: all 0.2s ease;
+
     z-index: 10;
 }
 
 .replay-btn:hover {
     background: rgba(139, 92, 246, 0.6);
+
     transform: scale(1.1);
 }
 
@@ -134,88 +267,150 @@
     height: 16px;
 }
 
-.video-wrapper > * {
-    max-height: 30vh;
-    width: 100%;
-    object-fit: contain;
-}
+/* =========================================================
+   QUESTION SECTION
+   ========================================================= */
 
 .question-section {
     text-align: center;
-    flex-grow: 1;
+
+    flex: 1 1 auto;
+
+    min-height: 0;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: center;
+
+    align-items: center;
+
+    overflow: hidden;
+
+    width: 100%;
 }
 
 .question-indicator-container {
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 1rem;
-    margin-bottom: 1rem;
+
+    margin-bottom: 0.7rem;
+
+    flex-shrink: 0;
 }
 
 .dashed-line {
     width: 50px;
+
     border-top: 1px dashed rgba(139, 92, 246, 0.4);
 }
 
 .question-counter {
     background: rgba(139, 92, 246, 0.1);
+
     color: #c4b5fd;
+
     padding: 0.35rem 1rem;
+
     border-radius: 20px;
+
     font-size: 0.75rem;
+
     font-weight: 700;
+
     letter-spacing: 0.08em;
+
     text-transform: uppercase;
 }
 
 .question-text {
-    font-size: 1.6rem;
+    font-size: 1.8rem;
+
     font-weight: 700;
-    margin: 0 0 1rem 0;
+
+    margin: 0 0 0.7rem 0;
+
     color: #ffffff;
+
     display: flex;
+
     justify-content: center;
+
     align-items: flex-start;
+
     gap: 0.5rem;
+
     line-height: 1.2;
+
+    max-width: 850px;
 }
 
 .quote-mark {
     color: #a78bfa;
+
     font-family: Georgia, serif;
-    font-size: 2rem;
+
+    font-size: 2.5rem;
+
     line-height: 0.8;
+
+    flex-shrink: 0;
 }
+
+/* =========================================================
+   STATUS PILL
+   ========================================================= */
 
 .status-pill-container {
     display: flex;
+
     justify-content: center;
+
     height: 38px;
+
     margin-top: 0.5rem;
+
+    flex-shrink: 0;
 }
 
 .status-pill {
     background: rgba(15, 23, 42, 0.6);
+
     border: 1px solid rgba(255, 255, 255, 0.06);
+
     border-radius: 20px;
+
     padding: 0 1.2rem;
+
     display: inline-flex;
+
     align-items: center;
+
     gap: 1.2rem;
+
     height: 100%;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+    box-shadow:
+            0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .listening-indicator {
     color: #10b981;
+
     font-size: 0.85rem;
+
     font-weight: 500;
+
     display: flex;
+
     align-items: center;
+
     gap: 0.4rem;
 }
 
@@ -226,168 +421,628 @@
 
 .divider {
     width: 1px;
+
     height: 16px;
+
     background: rgba(255, 255, 255, 0.1);
 }
 
 .timer-indicator {
     color: #f8fafc;
+
     font-size: 0.85rem;
+
     font-weight: 600;
+
     display: flex;
+
     align-items: center;
+
     gap: 0.5rem;
 }
 
 .timer-icon {
     width: 14px;
     height: 14px;
+
     color: #a78bfa;
 }
 
 .time-total {
     color: #64748b;
+
     font-weight: 400;
 }
 
+/* =========================================================
+   BOTTOM PANEL
+   ========================================================= */
+
 .bottom-panel {
     background: rgba(15, 23, 42, 0.4);
+
     border: 1px solid rgba(255, 255, 255, 0.05);
+
     border-radius: 16px;
-    padding: 1.5rem;
-    margin-top: 1rem;
-    flex-shrink: 0;
+
+    padding: 1rem 1.5rem;
+
+    margin-top: 0.8rem;
+
+    flex: 0 0 auto;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    position: relative;
+
+    z-index: 20;
 }
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
 
 .controls-section {
-    display: flex;
+    display: flex !important;
+
+    align-items: center;
+
     justify-content: center;
+
     gap: 1rem;
+
+    width: 100%;
+
+    min-height: 55px;
+
+    visibility: visible;
+
+    opacity: 1;
+
+    position: relative;
+
+    z-index: 21;
 }
+
+/* =========================================================
+   BUTTON
+   ========================================================= */
 
 .btn {
-    display: flex;
+    display: flex !important;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 0.5rem;
+
+    min-width: 180px;
+
+    min-height: 50px;
+
     padding: 0.75rem 2rem;
+
     border-radius: 12px;
+
     font-size: 0.95rem;
+
     font-weight: 600;
+
     cursor: pointer;
+
     transition: all 0.2s ease;
+
     border: none;
+
     outline: none;
+
+    visibility: visible;
+
+    opacity: 1;
+
+    position: relative;
+
+    z-index: 22;
 }
 
-.btn-icon {
-    width: 16px;
-    height: 16px;
+.btn:disabled {
+    cursor: not-allowed;
+
+    opacity: 0.6;
 }
 
 .btn:active {
     transform: scale(0.97);
 }
 
+.btn-icon {
+    width: 16px;
+    height: 16px;
+
+    display: inline-block;
+}
+
+/* =========================================================
+   PRIMARY BUTTON
+   ========================================================= */
+
 .primary-btn {
-    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    background:
+            linear-gradient(
+                    135deg,
+                    #8b5cf6 0%,
+                    #6d28d9 100%
+            );
+
     color: white;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    box-shadow:
+            0 4px 15px rgba(139, 92, 246, 0.25);
+
+    border:
+            1px solid rgba(255, 255, 255, 0.1);
+
+    display: flex !important;
+
+    visibility: visible;
+
+    opacity: 1;
 }
 
 .primary-btn:hover {
-    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    background:
+            linear-gradient(
+                    135deg,
+                    #7c3aed 0%,
+                    #5b21b6 100%
+            );
+
+    box-shadow:
+            0 6px 20px rgba(139, 92, 246, 0.4);
+
     transform: translateY(-1px);
 }
 
+/* =========================================================
+   SECONDARY BUTTON
+   ========================================================= */
+
 .secondary-btn {
     background: rgba(255, 255, 255, 0.06);
+
     color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    border:
+            1px solid rgba(255, 255, 255, 0.1);
+
     backdrop-filter: blur(10px);
+
+    display: flex !important;
+
+    visibility: visible;
+
+    opacity: 1;
 }
 
 .secondary-btn:hover {
     background: rgba(255, 255, 255, 0.1);
+
     transform: translateY(-1px);
+
     color: #fff;
 }
 
+/* =========================================================
+   DANGER BUTTON
+   ========================================================= */
+
 .danger-btn {
-    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    background:
+            linear-gradient(
+                    135deg,
+                    #ef4444 0%,
+                    #b91c1c 100%
+            );
+
     color: white;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+
+    box-shadow:
+            0 4px 15px rgba(239, 68, 68, 0.3);
+
+    display: flex !important;
+
+    visibility: visible;
+
+    opacity: 1;
 }
 
 .danger-btn:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    background:
+            linear-gradient(
+                    135deg,
+                    #dc2626 0%,
+                    #991b1b 100%
+            );
+
+    box-shadow:
+            0 6px 20px rgba(239, 68, 68, 0.5);
+
     transform: translateY(-1px);
 }
 
+/* =========================================================
+   SECURITY NOTE
+   ========================================================= */
+
 .security-note {
-    display: flex;
+    display: flex !important;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 0.4rem;
+
     color: #64748b;
+
     font-size: 0.75rem;
-    margin-top: 1rem;
+
+    margin-top: 0.7rem;
+
+    visibility: visible;
+
+    opacity: 1;
 }
 
 .shield-icon {
     width: 14px;
     height: 14px;
+
     color: #64748b;
 }
 
+/* =========================================================
+   COMPLETED SCREEN
+   ========================================================= */
+
 .completed-container {
     height: 100vh;
+
     width: 100vw;
+
     display: flex;
+
     flex-direction: column;
+
     justify-content: center;
+
     align-items: center;
-    background: linear-gradient(135deg, #0b1120 0%, #17103a 100%);
+
+    background:
+            linear-gradient(
+                    135deg,
+                    #0b1120 0%,
+                    #17103a 100%
+            );
+
     color: white;
+
     position: fixed;
+
     top: 0;
     left: 0;
+
     z-index: 1000;
 }
+
 .completed-container h1 {
     font-size: 3.5rem;
+
     margin-bottom: 1rem;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     gap: 15px;
 }
 
 .text-gradient-green {
-    background: linear-gradient(to right, #34d399, #10b981);
+    background:
+            linear-gradient(
+                    to right,
+                    #34d399,
+                    #10b981
+            );
+
     -webkit-background-clip: text;
+
     -webkit-text-fill-color: transparent;
+
     line-height: 1.3;
+
     padding-bottom: 0.1em;
 }
+
 .completed-container p {
     font-size: 1.25rem;
+
     color: #94a3b8;
 }
 
+/* =========================================================
+   LOADING SCREEN
+   ========================================================= */
+
 .loading-container {
     height: 100vh;
+
     width: 100vw;
+
     display: flex;
+
     justify-content: center;
+
     align-items: center;
+
     background: #0b1120;
+
     color: white;
+
     position: fixed;
+
     top: 0;
     left: 0;
+
     z-index: 1000;
+}
+
+/* =========================================================
+   ERROR SCREEN
+   ========================================================= */
+
+.error-container {
+    height: 100vh;
+
+    width: 100vw;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    background:
+            linear-gradient(
+                    135deg,
+                    #0b1120 0%,
+                    #17103a 100%
+            );
+
+    color: white;
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    z-index: 1000;
+
+    padding: 2rem;
+
+    box-sizing: border-box;
+}
+
+.error-container h2 {
+    color: #f87171;
+
+    margin-bottom: 1rem;
+}
+
+.error-container p {
+    color: #94a3b8;
+
+    max-width: 600px;
+
+    line-height: 1.6;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .glass-panel {
+        width: 96%;
+
+        height: 95vh;
+
+        padding: 1.2rem 1.5rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .video-wrapper {
+        height: 30vh;
+    }
+
+    .question-text {
+        font-size: 1.6rem;
+    }
+
+    .btn {
+        min-width: 160px;
+
+        padding: 0.7rem 1.5rem;
+    }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .glass-panel {
+        width: 100%;
+
+        height: 100vh;
+
+        max-height: 100vh;
+
+        border-radius: 0;
+
+        padding: 1rem;
+
+        overflow-y: auto;
+    }
+
+    .header-section {
+        margin-bottom: 0.7rem;
+    }
+
+    .title {
+        font-size: 1.3rem;
+    }
+
+    .subtitle {
+        font-size: 0.8rem;
+    }
+
+    .video-section {
+        margin-bottom: 0.7rem;
+    }
+
+    .video-wrapper {
+        height: 27vh;
+
+        min-height: 180px;
+
+        border-radius: 12px;
+    }
+
+    .question-section {
+        flex: 1 1 auto;
+
+        min-height: 250px;
+
+        overflow: visible;
+    }
+
+    .question-text {
+        font-size: 1.25rem;
+
+        line-height: 1.35;
+    }
+
+    .quote-mark {
+        font-size: 1.8rem;
+    }
+
+    .question-indicator-container {
+        gap: 0.5rem;
+    }
+
+    .dashed-line {
+        width: 25px;
+    }
+
+    .status-pill {
+        padding: 0 0.8rem;
+
+        gap: 0.7rem;
+    }
+
+    .bottom-panel {
+        padding: 0.8rem;
+
+        margin-top: 0.7rem;
+    }
+
+    .controls-section {
+        flex-direction: column;
+
+        gap: 0.7rem;
+    }
+
+    .btn {
+        width: 100%;
+
+        min-width: 0;
+
+        min-height: 48px;
+    }
+
+    .security-note {
+        font-size: 0.65rem;
+
+        margin-top: 0.6rem;
+    }
+
+    .completed-container h1 {
+        font-size: 2.2rem;
+
+        text-align: center;
+    }
+
+    .completed-container p {
+        font-size: 1rem;
+
+        text-align: center;
+
+        padding: 0 1rem;
+    }
+}
+
+/* =========================================================
+   SMALL HEIGHT SCREENS
+   ========================================================= */
+
+@media (max-height: 750px) and (min-width: 601px) {
+
+    .glass-panel {
+        padding-top: 1rem;
+
+        padding-bottom: 1rem;
+    }
+
+    .header-section {
+        margin-bottom: 0.5rem;
+    }
+
+    .video-section {
+        margin-bottom: 0.5rem;
+    }
+
+    .video-wrapper {
+        height: 29vh;
+    }
+
+    .question-text {
+        font-size: 1.5rem;
+
+        margin-bottom: 0.5rem;
+    }
+
+    .bottom-panel {
+        padding: 0.8rem 1rem;
+
+        margin-top: 0.5rem;
+    }
+
+    .security-note {
+        margin-top: 0.5rem;
+    }
 }
