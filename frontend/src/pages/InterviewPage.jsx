@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import "./InterviewPage.css";
 
 function InterviewPage() {
+    const navigate = useNavigate();
 
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -124,6 +126,15 @@ function InterviewPage() {
                 <p>
                     Thank you for attending the interview.
                 </p>
+
+                <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center" }}>
+                    <button 
+                        className="btn primary-btn" 
+                        onClick={() => navigate("/feedback")}
+                    >
+                        Give Feedback
+                    </button>
+                </div>
 
             </div>
 
